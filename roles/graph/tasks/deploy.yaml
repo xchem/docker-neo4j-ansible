@@ -134,6 +134,41 @@
     wait: yes
   when: graph_s3_endpoint|string|length > 0
 
+# Bolt TLS (optional)...
+#
+# Requested here, ahead of the StatefulSet, so the certificate Secret
+# already exists by the time the graph Pod tries to mount it.
+
+- name: Assert TLS variables
+  assert:
+    that: graph_hostname|string|length > 0
+    fail_msg: graph_hostname must be set when graph_ssl_enabled is true
+  when: graph_ssl_enabled|bool
+
+- name: Request Bolt TLS certificate
+  k8s:
+    definition: "{{ lookup('template', 'certificate.yaml.j2') }}"
+  when: graph_ssl_enabled|bool
+
+- name: Wait for Bolt TLS certificate to be ready
+  k8s_info:
+    api_version: cert-manager.io/v1
+    kind: Certificate
+    name: "{{ graph_tls_secret }}"
+    namespace: "{{ graph_namespace }}"
+  register: graph_tls_cert_info
+  until: >-
+    graph_tls_cert_info.resources|length > 0
+    and graph_tls_cert_info.resources[0].status is defined
+    and graph_tls_cert_info.resources[0].status.conditions is defined
+    and graph_tls_cert_info.resources[0].status.conditions
+        | selectattr('type', 'equalto', 'Ready')
+        | selectattr('status', 'equalto', 'True')
+        | list | length > 0
+  delay: 5
+  retries: 60
+  when: graph_ssl_enabled|bool
+
 - name: Deploy Graph
   k8s:
     definition: "{{ lookup('template', '{{ item }}.yaml.j2') }}"
