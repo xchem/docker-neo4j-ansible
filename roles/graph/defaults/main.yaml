@@ -130,6 +130,25 @@ graph_s3_endpoint: ''
 # and applied to Pods that use that namespace.
 graph_dockerhub_pullsecret: ''
 
+# Bolt TLS.
+#
+# When enabled a cert-manager Certificate is requested for 'graph_hostname'
+# via 'graph_cert_issuer' (a ClusterIssuer, expected to already exist in the
+# cluster). The resulting Secret is mounted into the graph StatefulSet and
+# used to enable dbms.ssl.policy.bolt.* on the Bolt connector.
+#
+# 'graph_hostname' must resolve to wherever Bolt is externally reachable -
+# it's required for the ClusterIssuer's HTTP-01 challenge and becomes the
+# certificate's CN/SAN, so clients must connect using this hostname (not a
+# bare IP) for TLS hostname verification to succeed.
+graph_ssl_enabled: no
+graph_hostname: ''
+graph_cert_issuer: letsencrypt-nginx-production
+graph_tls_secret: graph-tls
+# REQUIRED rejects any non-TLS Bolt connection outright. Use OPTIONAL for a
+# phased rollout where existing plain bolt:// clients need time to migrate.
+graph_bolt_tls_level: REQUIRED
+
 # -----------------------------------------------------------------------------
 
 # Picked up from the environment

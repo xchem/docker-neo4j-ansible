@@ -164,6 +164,18 @@ spec:
         - name: FORCE_EARLY_READINESS
           value: "yes"
 {% endif %}
+{% if graph_ssl_enabled %}
+        - name: NEO4J_dbms_ssl_policy_bolt_enabled
+          value: "true"
+        - name: NEO4J_dbms_ssl_policy_bolt_base__directory
+          value: certificates/bolt
+        - name: NEO4J_dbms_ssl_policy_bolt_private__key
+          value: private.key
+        - name: NEO4J_dbms_ssl_policy_bolt_public__certificate
+          value: public.crt
+        - name: NEO4J_dbms_connector_bolt_tls__level
+          value: "{{ graph_bolt_tls_level }}"
+{% endif %}
         resources:
           limits:
             cpu: "{{ graph_core_limit }}"
@@ -176,6 +188,10 @@ spec:
         volumeMounts:
         - mountPath: /data
           name: graph-volume
+{% if graph_ssl_enabled %}
+        - name: graph-tls
+          mountPath: /ssl
+{% endif %}
 
       - name: sidecar
         image: "{{ graph_image_registry }}/{{ graph_image }}-sidecar:{{ graph_tag }}"
@@ -185,6 +201,10 @@ spec:
           value: /data
         - name: NEO4J_AUTH
           value: neo4j/{{ graph_password }}
+{% if graph_ssl_enabled %}
+        - name: NEO4J_BOLT_SCHEME
+          value: neo4j+ssc
+{% endif %}
         volumeMounts:
         - mountPath: /data
           name: graph-volume
@@ -197,4 +217,14 @@ spec:
       - name: s3-config
         configMap:
           name: s3-config
+{% endif %}
+{% if graph_ssl_enabled %}
+      - name: graph-tls
+        secret:
+          secretName: {{ graph_tls_secret }}
+          items:
+          - key: tls.crt
+            path: bolt/public.crt
+          - key: tls.key
+            path: bolt/private.key
 {% endif %}

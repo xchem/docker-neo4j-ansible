@@ -1,0 +1,19 @@
+---
+
+# A cert-manager Certificate for the Bolt connector's TLS policy.
+# Only rendered/applied when 'graph_ssl_enabled' is true (see deploy.yaml).
+# The resulting Secret is mounted into the graph StatefulSet at /ssl, which
+# the upstream neo4j Docker image symlinks to $NEO4J_HOME/certificates.
+
+kind: Certificate
+apiVersion: cert-manager.io/v1
+metadata:
+  name: {{ graph_tls_secret }}
+  namespace: {{ graph_namespace }}
+spec:
+  secretName: {{ graph_tls_secret }}
+  issuerRef:
+    name: {{ graph_cert_issuer }}
+    kind: ClusterIssuer
+  dnsNames:
+  - {{ graph_hostname }}
