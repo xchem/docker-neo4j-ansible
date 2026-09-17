@@ -2,4 +2,5 @@
 **/.DS_Store
 venv/
 
-parameters.yaml
+parameters.yaml__pycache__/
+.pytest_cache/

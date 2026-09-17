@@ -33,10 +33,12 @@ graph_bucket_path: build/vendor/toxcast/2019-10-24/build-1
 # to the loader container's GRAPH_WIPE variable.
 graph_wipe: yes
 # Do we force early readiness on the graph Pod?
-# Setting this to 'yes' will result in a ready Pod before
-# the once and always scrips have had time to run.
 # This results in the creation of the environment variable
-# 'FORCE_EARLY_READINESS'. Any value results in early readiness.
+# 'FORCE_EARLY_READINESS', used by the image's '/readiness-probe.sh'.
+# The Pod's readiness probe is now a TCP check on the Bolt port,
+# which does not use this variable, so the Pod is ready as soon as Bolt
+# accepts connections, regardless of this setting
+# (i.e. possibly before the once and always scripts have run).
 graph_force_early_readiness: no
 
 # Path to built-in cypher scripts (in 'files').

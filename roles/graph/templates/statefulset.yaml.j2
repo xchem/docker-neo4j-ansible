@@ -124,12 +124,13 @@ spec:
           name: http
         - containerPort: 7687
           name: bolt
+        # Ready when Bolt accepts connections.
+        # Neo4j only opens Bolt once the database is available.
+        # (The image's /readiness-probe.sh looks for a 'ready' line in debug.log,
+        # which is lost when the log is rotated, making the Pod permanently un-ready)
         readinessProbe:
-          exec:
-            command:
-            - /bin/bash
-            - -c
-            - /readiness-probe.sh
+          tcpSocket:
+            port: 7687
           initialDelaySeconds: 30
           timeoutSeconds: 4
           periodSeconds: 20
